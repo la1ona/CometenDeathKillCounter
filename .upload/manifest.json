@@ -1,0 +1,7 @@
+{
+  "version": "1.11.0",
+  "source": "src/CometenDeathCounter.cs",
+  "panel": "web/death_counter_panel.html",
+  "overlay": "overlay/death_counter_overlay.html",
+  "release": "release/CometenDeathKillCounter-v1.11.0.zip"
+}
