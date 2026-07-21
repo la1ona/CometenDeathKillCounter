@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cometen Death Counter V1.11</title>
+<style>
+    :root {
+        color-scheme: dark;
+        --bg: #090b0f;
+        --panel: #11151c;
+        --panel-2: #171c25;
+        --border: #2a313e;
+        --text: #f1f4f8;
+        --muted: #98a2b3;
+        --accent: #ff8a1f;
+        --accent-2: #ffb15f;
+        --danger: #e5484d;
+        --success: #30a46c;
+        --shadow: 0 18px 55px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+            radial-gradient(circle at 15% 0%, rgba(255, 138, 31, 0.12), transparent 34rem),
+            var(--bg);
+        color: var(--text);
+        font-family: Inter, Segoe UI, Arial, sans-serif;
+    }
+
+    button, input { font: inherit; }
+
+    .app {
+        width: min(1180px, calc(100% - 32px));
+        margin: 28px auto 50px;
+    }
+
+    .topbar {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        align-items: center;
+        margin-bottom: 22px;
+    }
+
+    .eyebrow {
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.19em;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }
+
+    h1 {
+        margin: 0;
+        font-size: clamp(25px, 4vw, 42px);
+        letter-spacing: -0.04em;
+    }
+
+    .connection {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: rgba(17, 21, 28, 0.82);
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--danger);
+        box-shadow: 0 0 0 5px rgba(229, 72, 77, 0.12);
+    }
+
+    .connection.connected .dot {
+        background: var(--success);
+        box-shadow: 0 0 0 5px rgba(48, 164, 108, 0.12);
+    }
+
+    .counter-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .card, .section {
+        background: linear-gradient(180deg, rgba(23, 28, 37, 0.98), rgba(17, 21, 28, 0.98));
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+    }
+
+    .card { padding: 20px; }
+
+    .counter-label {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+    }
+
+    .counter-value {
+        font-size: clamp(48px, 8vw, 82px);
+        font-weight: 900;
+        line-height: 1;
+        margin: 15px 0 18px;
+        letter-spacing: -0.055em;
+    }
+
+    .button-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    button {
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        background: var(--panel-2);
+        color: var(--text);
+        min-height: 44px;
+        padding: 10px 14px;
+        cursor: pointer;
+        font-weight: 800;
+        transition: 0.15s ease;
+    }
+
+    button:hover:not(:disabled) {
+        transform: translateY(-1px);
+        border-color: #4b5565;
+    }
+
+    button.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #181009;
+    }
+
+    button.primary:hover:not(:disabled) {
+        background: var(--accent-2);
+        border-color: var(--accent-2);
+    }
+
+    button.danger {
+        border-color: rgba(229, 72, 77, 0.55);
+        color: #ffb7ba;
+    }
+
+    button:disabled {
+        opacity: 0.42;
+        cursor: not-allowed;
+    }
+
+    .section {
+        padding: 20px;
+        margin-top: 16px;
+    }
+
+    .section-title {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: baseline;
+        margin-bottom: 17px;
+    }
+
+    .section-title h2 {
+        margin: 0;
+        font-size: 18px;
+    }
+
+    .section-title span,
+    .note {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.55;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 13px;
+    }
+
+    .form-grid.two {
+        grid-template-columns: 2fr 1fr;
+    }
+
+    .form-grid.four-values {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .form-grid.one-column {
+        grid-template-columns: minmax(0, 520px);
+    }
+
+    #saveStatus.saved {
+        color: var(--success);
+        font-weight: 800;
+    }
+
+    label {
+        display: grid;
+        gap: 7px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+
+    input {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #0b0e13;
+        color: var(--text);
+        min-height: 44px;
+        padding: 10px 12px;
+        outline: none;
+    }
+
+    input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(255, 138, 31, 0.13);
+    }
+
+    input[type="checkbox"] {
+        width: 18px;
+        min-height: 18px;
+        accent-color: var(--accent);
+    }
+
+    input[type="range"] {
+        padding: 0;
+        border: 0;
+        background: transparent;
+        accent-color: var(--accent);
+    }
+
+    input[type="color"] {
+        min-height: 48px;
+        padding: 5px;
+        cursor: pointer;
+    }
+
+    .appearance-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(120px, 1fr));
+        gap: 13px;
+    }
+
+    .appearance-sliders {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 13px;
+        margin-top: 16px;
+    }
+
+    .check {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 9px;
+        min-height: 44px;
+        margin-top: 12px;
+        text-transform: none;
+        letter-spacing: 0;
+        color: var(--text);
+    }
+
+    .visibility-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+    }
+
+    .visibility-option {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 9px;
+        min-height: 48px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #0b0e13;
+        color: var(--text);
+        text-transform: none;
+        letter-spacing: 0;
+    }
+
+    .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 14px;
+    }
+
+    .position-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 3fr) minmax(250px, 1fr);
+        gap: 18px;
+        align-items: start;
+    }
+
+    .stage {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+        border: 1px solid #3a4352;
+        border-radius: 13px;
+        background:
+            linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+            radial-gradient(circle at center, #1c2632, #0b0f15 70%);
+        background-size: 10% 10%, 10% 10%, auto;
+        touch-action: none;
+        user-select: none;
+    }
+
+    .stage::before {
+        content: "1920 x 1080";
+        position: absolute;
+        left: 12px;
+        bottom: 9px;
+        color: rgba(255,255,255,0.38);
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .drag-counter {
+        position: absolute;
+        left: 50%;
+        top: 15%;
+        box-sizing: border-box;
+        transform: translate(-50%, -50%) scale(1);
+        transform-origin: center;
+        width: 510px;
+        min-width: 0;
+        padding: 18px 28px 20px;
+        border-left: 6px solid var(--accent);
+        background: linear-gradient(90deg, rgba(8,10,14,0.96), rgba(13,16,22,0.86));
+        color: #ffffff;
+        text-shadow: 0 2px 4px rgba(0,0,0,.75);
+        box-shadow: 0 12px 32px rgba(0,0,0,0.34);
+        cursor: grab;
+        will-change: left, top, transform;
+    }
+
+    .drag-counter.dragging { cursor: grabbing; }
+
+    .drag-title {
+        color: #ff9b3f;
+        font-size: 23px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+    }
+
+    .drag-main {
+        display: flex;
+        align-items: baseline;
+        gap: 28px;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+    }
+
+    .drag-main span {
+        display: flex;
+        align-items: baseline;
+        gap: 9px;
+    }
+
+    .drag-main b {
+        font-size: 42px;
+        line-height: 1;
+        letter-spacing: 0;
+    }
+
+    .drag-total {
+        margin-top: 9px;
+        color: #c7ced9;
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: .03em;
+        text-transform: none;
+    }
+
+    .layout-controls {
+        display: grid;
+        gap: 13px;
+    }
+
+    .coordinate-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .preset-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 7px;
+    }
+
+    .preset-grid button {
+        min-height: 38px;
+        padding: 7px;
+        font-size: 11px;
+    }
+
+    .toast {
+        position: fixed;
+        right: 22px;
+        bottom: 22px;
+        max-width: min(390px, calc(100% - 44px));
+        padding: 13px 16px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #161b23;
+        box-shadow: var(--shadow);
+        opacity: 0;
+        transform: translateY(12px);
+        pointer-events: none;
+        transition: 0.18s ease;
+        font-weight: 700;
+        z-index: 100;
+    }
+
+    .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    @media (max-width: 850px) {
+        .counter-grid,
+        .form-grid,
+        .form-grid.two,
+        .form-grid.four-values,
+        .position-layout,
+        .appearance-grid,
+        .appearance-sliders,
+        .visibility-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .topbar {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+    }
+</style>
+</head>
+<body>
+<div class="app">
+    <header class="topbar">
+        <div>
+            <div class="eyebrow">Streamer.bot control panel</div>
+            <h1>Cometen Death Counter V1.11</h1>
+        </div>
+        <div class="connection" id="connection">
+            <span class="dot"></span>
+            <span id="connectionText">Frakoblet</span>
+        </div>
+    </header>
+
+    <section class="counter-grid">
+        <article class="card">
+            <div class="counter-label">Deaths denne streamen</div>
+            <div class="counter-value" id="deathsValue">0</div>
+            <div class="button-row">
+                <button class="requires-connection" data-op="removeDeath">-1</button>
+                <button class="primary requires-connection" data-op="addDeath">+1 Death</button>
+            </div>
+        </article>
+
+        <article class="card">
+            <div class="counter-label">Kills denne streamen</div>
+            <div class="counter-value" id="killsValue">0</div>
+            <div class="button-row">
+                <button class="requires-connection" data-op="removeKill">-1</button>
+                <button class="primary requires-connection" data-op="addKill">+1 Kill</button>
+            </div>
+        </article>
+
+        <article class="card">
+            <div class="counter-label">Total kills</div>
+            <div class="counter-value" id="totalValue">0</div>
+            <div class="button-row">
+                <button class="requires-connection" id="statusButton">Send status</button>
+                <button class="requires-connection" id="syncButton">Synkroniser</button>
+            </div>
+        </article>
+
+        <article class="card">
+            <div class="counter-label">Total deaths</div>
+            <div class="counter-value" id="totalDeathsValue">0</div>
+            <div class="button-row">
+                <button class="danger requires-connection" id="resetKillsQuick">Reset kills</button>
+                <button class="danger requires-connection" id="resetDeathsQuick">Reset deaths</button>
+            </div>
+        </article>
+    </section>
+
+    <section class="section">
+        <div class="section-title">
+            <h2>Flytt overlayet</h2>
+            <span>Dra telleren rundt i 16:9-ruten</span>
+        </div>
+
+        <div class="position-layout">
+            <div class="stage" id="stage">
+                <div class="drag-counter" id="dragCounter">
+                    <div class="drag-title" id="dragTitle">Invasion</div>
+                    <div class="drag-main" id="dragMain">
+                        <span id="dragDeathsMetric">Deaths <b id="dragDeaths">0</b></span>
+                        <span id="dragKillsMetric">Kills <b id="dragKills">0</b></span>
+                    </div>
+                    <div class="drag-total" id="dragTotalMetric">Total Kills: <span id="dragTotal">0</span></div>
+                    <div class="drag-total" id="dragTotalDeathsMetric">Total Deaths: <span id="dragTotalDeaths">0</span></div>
+                </div>
+            </div>
+
+            <div class="layout-controls">
+                <div class="coordinate-row">
+                    <label>
+                        X-posisjon %
+                        <input id="posXInput" type="number" min="3" max="97" step="0.1" value="50">
+                    </label>
+                    <label>
+                        Y-posisjon %
+                        <input id="posYInput" type="number" min="4" max="96" step="0.1" value="15">
+                    </label>
+                </div>
+
+                <label>
+                    Størrelse <span id="scaleText">100%</span>
+                    <input id="scaleInput" type="range" min="0.35" max="2.5" step="0.05" value="1">
+                </label>
+
+                <div class="preset-grid">
+                    <button data-pos="12,10">Oppe V</button>
+                    <button data-pos="50,10">Oppe</button>
+                    <button data-pos="88,10">Oppe H</button>
+                    <button data-pos="12,50">Venstre</button>
+                    <button data-pos="50,50">Midten</button>
+                    <button data-pos="88,50">Høyre</button>
+                    <button data-pos="12,90">Nede V</button>
+                    <button data-pos="50,90">Nede</button>
+                    <button data-pos="88,90">Nede H</button>
+                </div>
+
+                <button class="primary requires-connection" id="saveLayout">
+                    Lagre plassering
+                </button>
+
+                <div class="note">
+                    Browser Source i OBS må være 1920 x 1080 for at plasseringen skal
+                    samsvare med hele streambildet.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="section-title">
+            <h2>Navn på telleren</h2>
+            <span>Endrer teksten «Invasion»</span>
+        </div>
+
+        <div class="form-grid one-column">
+            <label>
+                Navn / tittel
+                <input id="titleInput" type="text" value="Invasion">
+            </label>
+        </div>
+
+        <div class="visibility-grid">
+            <label class="visibility-option">
+                <input id="showDeathsInput" type="checkbox" checked>
+                Vis Deaths
+            </label>
+            <label class="visibility-option">
+                <input id="showKillsInput" type="checkbox" checked>
+                Vis Kills
+            </label>
+            <label class="visibility-option">
+                <input id="showTotalInput" type="checkbox" checked>
+                Vis Total Kills
+            </label>
+            <label class="visibility-option">
+                <input id="showTotalDeathsInput" type="checkbox" checked>
+                Vis Total Deaths
+            </label>
+        </div>
+
+        <div class="actions">
+            <button class="primary requires-connection" id="saveConfig">
+                Lagre alle innstillinger
+            </button>
+        </div>
+        <div class="small-note" id="saveStatus">
+            Knappen lagrer navn, visning, plassering, størrelse og farger.
+        </div>
+    </section>
+
+
+    <section class="section">
+        <div class="section-title">
+            <h2>Farger og størrelse</h2>
+            <span>Endres live i forhåndsvisningen</span>
+        </div>
+
+        <div class="appearance-grid">
+            <label>
+                Kantfarge
+                <input id="accentColorInput" type="color" value="#ff8a1f">
+            </label>
+            <label>
+                Tittelfarge
+                <input id="titleColorInput" type="color" value="#ff9b3f">
+            </label>
+            <label>
+                Tallfarge
+                <input id="textColorInput" type="color" value="#ffffff">
+            </label>
+            <label>
+                Etikettfarge
+                <input id="labelColorInput" type="color" value="#aab2c0">
+            </label>
+            <label>
+                Bakgrunnsfarge
+                <input id="backgroundColorInput" type="color" value="#0d1016">
+            </label>
+        </div>
+
+        <div class="appearance-sliders">
+            <label>
+                Total størrelse <span id="appearanceScaleText">100%</span>
+                <input id="appearanceScaleInput" type="range" min="0.35" max="2.5" step="0.05" value="1">
+            </label>
+            <label>
+                Bredde <span id="boxWidthText">510 px</span>
+                <input id="boxWidthInput" type="range" min="320" max="1000" step="10" value="510">
+            </label>
+            <label>
+                Bakgrunn <span id="opacityText">94%</span>
+                <input id="backgroundOpacityInput" type="range" min="0" max="1" step="0.05" value="0.94">
+            </label>
+        </div>
+
+        <div class="actions">
+            <button class="primary requires-connection" id="saveAppearance">
+                Lagre farger og størrelse
+            </button>
+            <button id="resetAppearance">
+                Standardutseende
+            </button>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="section-title">
+            <h2>Sett eksakte verdier</h2>
+            <span>Brukes ved korrigering</span>
+        </div>
+
+        <div class="form-grid four-values">
+            <label>
+                Deaths
+                <input id="setDeaths" type="number" min="0" value="0">
+            </label>
+            <label>
+                Stream kills
+                <input id="setKills" type="number" min="0" value="0">
+            </label>
+            <label>
+                Total kills
+                <input id="setTotal" type="number" min="0" value="0">
+            </label>
+            <label>
+                Total deaths
+                <input id="setTotalDeaths" type="number" min="0" value="0">
+            </label>
+        </div>
+
+        <div class="actions">
+            <button class="primary requires-connection" id="applyValues">Lagre verdier</button>
+            <button class="danger requires-connection" id="resetStream">Reset stream</button>
+            <button class="danger requires-connection" id="resetKills">Reset kills</button>
+            <button class="danger requires-connection" id="resetDeaths">Reset deaths</button>
+            <button class="danger requires-connection" id="resetAll">Reset alt</button>
+        </div>
+        <div class="small-note">
+            Reset stream nullstiller bare streamens Deaths og Kills. Reset kills/deaths
+            nullstiller både streamteller og tilhørende totalteller.
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="section-title">
+            <h2>Tilkobling</h2>
+            <span>Actionen finnes automatisk</span>
+        </div>
+
+        <div class="form-grid two">
+            <label>
+                WebSocket-adresse
+                <input id="wsUrlInput" type="text" value="ws://127.0.0.1:8081/">
+            </label>
+            <label>
+                Action-navn
+                <input id="actionNameInput" type="text" value="Cometen Death Counter">
+            </label>
+        </div>
+
+        <div class="actions">
+            <button id="reconnectButton">Koble til på nytt</button>
+        </div>
+    </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+
+    const STATE_TYPE = "DEATH_COUNTER_STATE";
+
+    class DeathCounterSocket {
+        constructor(options) {
+            this.url = options.url;
+            this.actionName = options.actionName || "Cometen Death Counter";
+            this.onState = options.onState || (() => {});
+            this.onConnection = options.onConnection || (() => {});
+            this.onError = options.onError || (() => {});
+            this.socket = null;
+            this.actionId = null;
+            this.reconnectTimer = null;
+            this.requestNumber = 0;
+        }
+
+        connect() {
+            clearTimeout(this.reconnectTimer);
+
+            if (this.socket) {
+                this.socket.onopen = null;
+                this.socket.onclose = null;
+                this.socket.onerror = null;
+                this.socket.onmessage = null;
+                try { this.socket.close(); } catch (_) {}
+            }
+
+            this.onConnection(false, "Kobler til...");
+
+            try {
+                this.socket = new WebSocket(this.url);
+            } catch (error) {
+                this.onConnection(false, "Ugyldig adresse");
+                this.onError(error.message);
+                return;
+            }
+
+            this.socket.onopen = () => {
+                this.onConnection(true, "Tilkoblet");
+                this.subscribeToFallback();
+                this.findAction();
+            };
+
+            this.socket.onclose = () => {
+                this.actionId = null;
+                this.onConnection(false, "Frakoblet");
+                this.reconnectTimer = setTimeout(() => this.connect(), 2500);
+            };
+
+            this.socket.onerror = () => {
+                this.onConnection(false, "Tilkoblingsfeil");
+            };
+
+            this.socket.onmessage = (event) => this.handleMessage(event.data);
+        }
+
+        send(payload) {
+            if (!this.socket || this.socket.readyState !== WebSocket.OPEN)
+                return false;
+
+            this.socket.send(JSON.stringify(payload));
+            return true;
+        }
+
+        nextId(prefix) {
+            return `${prefix}-${Date.now()}-${++this.requestNumber}`;
+        }
+
+        subscribeToFallback() {
+            this.send({
+                request: "Subscribe",
+                id: this.nextId("dc-subscribe"),
+                events: {
+                    Raw: ["ActionCompleted"]
+                }
+            });
+        }
+
+        findAction() {
+            this.send({
+                request: "GetActions",
+                id: this.nextId("dc-get-actions")
+            });
+        }
+
+        resolveAction(actions) {
+            if (!Array.isArray(actions)) return;
+
+            const wanted = this.actionName.trim().toLowerCase();
+
+            let action = actions.find((item) =>
+                String(item.name || "").trim().toLowerCase() === wanted
+            );
+
+            if (!action) {
+                action = actions.find((item) => {
+                    const name = String(item.name || "").toLowerCase();
+                    return name.includes("death") && name.includes("counter");
+                });
+            }
+
+            if (action) {
+                this.actionId = action.id;
+                this.actionName = action.name;
+                setTimeout(() => this.doAction("sync"), 100);
+            } else {
+                this.onError(`Fant ikke actionen "${this.actionName}" i Streamer.bot.`);
+            }
+        }
+
+        doAction(operation, extraArgs = {}) {
+            const action = this.actionId
+                ? { id: this.actionId }
+                : { name: this.actionName };
+
+            // Streamer.bot handles WebSocket DoAction arguments most consistently
+            // when values are sent as strings. The C# action parses them back.
+            const actionArgs = { operation: String(operation) };
+
+            Object.entries(extraArgs || {}).forEach(([key, value]) => {
+                if (value === undefined || value === null) return;
+                actionArgs[key] = typeof value === "boolean"
+                    ? (value ? "true" : "false")
+                    : String(value);
+            });
+
+            return this.send({
+                request: "DoAction",
+                action,
+                args: actionArgs,
+                id: this.nextId("dc-action")
+            });
+        }
+
+        handleMessage(raw) {
+            let message = raw;
+
+            if (typeof message === "string") {
+                try {
+                    message = JSON.parse(message);
+                } catch (_) {
+                    return;
+                }
+            }
+
+            if (!message || typeof message !== "object") return;
+
+            if (Array.isArray(message.actions)) {
+                this.resolveAction(message.actions);
+            }
+
+            const directState = this.findState(message);
+            if (directState) {
+                this.onState(directState);
+                return;
+            }
+
+            if (
+                message.event &&
+                String(message.event.source || "").toLowerCase() === "raw" &&
+                String(message.event.type || "").toLowerCase() === "actioncompleted"
+            ) {
+                const data = message.data || {};
+                const argumentsObject = data.arguments || {};
+
+                if (argumentsObject.dcStateJson) {
+                    try {
+                        const fallbackState =
+                            typeof argumentsObject.dcStateJson === "string"
+                                ? JSON.parse(argumentsObject.dcStateJson)
+                                : argumentsObject.dcStateJson;
+
+                        if (fallbackState && fallbackState.type === STATE_TYPE)
+                            this.onState(fallbackState);
+                    } catch (_) {}
+                }
+            }
+        }
+
+        findState(value, depth = 0) {
+            if (depth > 7 || value == null) return null;
+
+            if (typeof value === "string") {
+                try {
+                    return this.findState(JSON.parse(value), depth + 1);
+                } catch (_) {
+                    return null;
+                }
+            }
+
+            if (typeof value !== "object") return null;
+            if (value.type === STATE_TYPE) return value;
+
+            for (const child of Object.values(value)) {
+                const found = this.findState(child, depth + 1);
+                if (found) return found;
+            }
+
+            return null;
+        }
+    }
+
+
+(() => {
+    "use strict";
+
+    const $ = (id) => document.getElementById(id);
+    const STORAGE_WS = "cometenDeathCounter.wsUrl";
+    const STORAGE_ACTION = "cometenDeathCounter.actionName";
+
+    const wsUrlInput = $("wsUrlInput");
+    const actionNameInput = $("actionNameInput");
+    const connection = $("connection");
+    const connectionText = $("connectionText");
+    const toastElement = $("toast");
+    const stage = $("stage");
+    const dragCounter = $("dragCounter");
+
+    let posX = 50;
+    let posY = 15;
+    let scale = 1;
+    let boxWidth = 510;
+    let backgroundOpacity = 0.94;
+    let accentColor = "#ff8a1f";
+    let titleColor = "#ff9b3f";
+    let textColor = "#ffffff";
+    let labelColor = "#aab2c0";
+    let backgroundColor = "#0d1016";
+    let dragging = false;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+    let pendingSaveToken = "";
+    let pendingSaveTimer = null;
+    let backendVersion = "";
+
+    wsUrlInput.value = localStorage.getItem(STORAGE_WS) || wsUrlInput.value;
+    actionNameInput.value = localStorage.getItem(STORAGE_ACTION) || actionNameInput.value;
+
+    let client = null;
+
+    function showToast(message) {
+        if (!message) return;
+        toastElement.textContent = message;
+        toastElement.classList.add("show");
+        clearTimeout(toastElement.hideTimer);
+        toastElement.hideTimer = setTimeout(() => {
+            toastElement.classList.remove("show");
+        }, 2300);
+    }
+
+    function setConnected(connected, text) {
+        connection.classList.toggle("connected", connected);
+        connectionText.textContent = connected && backendVersion
+            ? `Tilkoblet - C# V${backendVersion}`
+            : text;
+        document.querySelectorAll(".requires-connection").forEach((button) => {
+            button.disabled = !connected;
+        });
+    }
+
+    function createConnection() {
+        localStorage.setItem(STORAGE_WS, wsUrlInput.value.trim());
+        localStorage.setItem(STORAGE_ACTION, actionNameInput.value.trim());
+
+        client = new DeathCounterSocket({
+            url: wsUrlInput.value.trim(),
+            actionName: actionNameInput.value.trim(),
+            onConnection: setConnected,
+            onError: showToast,
+            onState: applyState
+        });
+
+        client.connect();
+    }
+
+    function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    function hexToRgb(hex) {
+        const clean = String(hex || "#000000").replace("#", "");
+        const parsed = Number.parseInt(clean, 16);
+
+        return {
+            r: (parsed >> 16) & 255,
+            g: (parsed >> 8) & 255,
+            b: parsed & 255
+        };
+    }
+
+    function rgba(hex, opacity) {
+        const rgb = hexToRgb(hex);
+        return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
+    }
+
+    function updateAppearancePreview() {
+        dragCounter.style.width = `${boxWidth}px`;
+        dragCounter.style.maxWidth = "none";
+        dragCounter.style.minWidth = "0";
+        dragCounter.style.borderLeftColor = accentColor;
+        dragCounter.style.color = textColor;
+        dragCounter.style.background =
+            `linear-gradient(90deg, ${rgba(backgroundColor, backgroundOpacity)}, ` +
+            `${rgba(backgroundColor, backgroundOpacity * 0.88)})`;
+
+        $("dragTitle").style.color = titleColor;
+        document.querySelectorAll(".drag-main span").forEach((element) => {
+            element.style.color = labelColor;
+        });
+        document.querySelectorAll(".drag-main b").forEach((element) => {
+            element.style.color = textColor;
+        });
+        document.querySelectorAll(".drag-total").forEach((element) => {
+            element.style.color = labelColor;
+        });
+
+        $("accentColorInput").value = accentColor;
+        $("titleColorInput").value = titleColor;
+        $("textColorInput").value = textColor;
+        $("labelColorInput").value = labelColor;
+        $("backgroundColorInput").value = backgroundColor;
+        $("appearanceScaleInput").value = scale;
+        $("appearanceScaleText").textContent = `${Math.round(scale * 100)}%`;
+        $("boxWidthInput").value = boxWidth;
+        $("boxWidthText").textContent = `${Math.round(boxWidth)} px`;
+        $("backgroundOpacityInput").value = backgroundOpacity;
+        $("opacityText").textContent = `${Math.round(backgroundOpacity * 100)}%`;
+        updatePositionPreview();
+    }
+
+    function getPreviewScale() {
+        const stageWidth = stage.getBoundingClientRect().width || 1920;
+        return (stageWidth / 1920) * scale;
+    }
+
+    function getPositionBounds() {
+        const stageRect = stage.getBoundingClientRect();
+        const previewScale = getPreviewScale();
+        const renderedWidth = Math.max(1, dragCounter.offsetWidth * previewScale);
+        const renderedHeight = Math.max(1, dragCounter.offsetHeight * previewScale);
+        const halfX = Math.min(50, (renderedWidth / 2 / Math.max(1, stageRect.width)) * 100);
+        const halfY = Math.min(50, (renderedHeight / 2 / Math.max(1, stageRect.height)) * 100);
+
+        return {
+            minX: halfX,
+            maxX: 100 - halfX,
+            minY: halfY,
+            maxY: 100 - halfY
+        };
+    }
+
+    function clampPositionToStage() {
+        const bounds = getPositionBounds();
+        posX = clamp(posX, bounds.minX, bounds.maxX);
+        posY = clamp(posY, bounds.minY, bounds.maxY);
+    }
+
+    function updateCounterVisibilityPreview() {
+        const showDeaths = $("showDeathsInput").checked;
+        const showKills = $("showKillsInput").checked;
+        const showTotal = $("showTotalInput").checked;
+        const showTotalDeaths = $("showTotalDeathsInput").checked;
+
+        $("dragMain").style.display = (showDeaths || showKills) ? "flex" : "none";
+        $("dragDeathsMetric").style.display = showDeaths ? "flex" : "none";
+        $("dragKillsMetric").style.display = showKills ? "flex" : "none";
+        $("dragTotalMetric").style.display = showTotal ? "block" : "none";
+        $("dragTotalDeathsMetric").style.display = showTotalDeaths ? "block" : "none";
+
+        requestAnimationFrame(updatePositionPreview);
+    }
+
+    function updatePositionPreview() {
+        dragCounter.style.width = `${boxWidth}px`;
+        dragCounter.style.left = `${posX}%`;
+        dragCounter.style.top = `${posY}%`;
+        dragCounter.style.transform =
+            `translate(-50%, -50%) scale(${getPreviewScale()})`;
+
+        clampPositionToStage();
+        dragCounter.style.left = `${posX}%`;
+        dragCounter.style.top = `${posY}%`;
+
+        $("posXInput").value = posX.toFixed(1);
+        $("posYInput").value = posY.toFixed(1);
+        $("scaleInput").value = scale;
+        $("scaleText").textContent = `${Math.round(scale * 100)}%`;
+        $("appearanceScaleInput").value = scale;
+        $("appearanceScaleText").textContent = `${Math.round(scale * 100)}%`;
+    }
+
+    function collectAllSettings() {
+        clampPositionToStage();
+        readAppearanceControls();
+        updatePositionPreview();
+
+        return {
+            title: $("titleInput").value,
+            showDeaths: $("showDeathsInput").checked,
+            showKills: $("showKillsInput").checked,
+            showTotal: $("showTotalInput").checked,
+            showTotalDeaths: $("showTotalDeathsInput").checked,
+            posX: Number(posX.toFixed(2)),
+            posY: Number(posY.toFixed(2)),
+            scale: Number(scale.toFixed(2)),
+            boxWidth: Math.round(boxWidth),
+            backgroundOpacity: Number(backgroundOpacity.toFixed(2)),
+            accentColor,
+            titleColor,
+            textColor,
+            labelColor,
+            backgroundColor
+        };
+    }
+
+    function saveAllSettings() {
+        const status = $("saveStatus");
+
+        if (!client) {
+            showToast("Webpanelet er ikke tilkoblet.");
+            return false;
+        }
+
+        if (!backendVersion.startsWith("1.11.")) {
+            status.textContent =
+                `Feil C#-versjon: ${backendVersion || "ukjent"}. ` +
+                "Bytt og kompiler CometenDeathCounter V1.11.";
+            status.classList.remove("saved");
+            showToast("Webpanelet krever C# V1.11.");
+            return false;
+        }
+
+        const settings = collectAllSettings();
+        const token =
+            `dc-save-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+        pendingSaveToken = token;
+        clearTimeout(pendingSaveTimer);
+
+        const sent = client.doAction("saveAll", {
+            title: String(settings.title ?? ""),
+            showDeaths: settings.showDeaths ? "true" : "false",
+            showKills: settings.showKills ? "true" : "false",
+            showTotal: settings.showTotal ? "true" : "false",
+            showTotalDeaths: settings.showTotalDeaths ? "true" : "false",
+            posX: String(settings.posX),
+            posY: String(settings.posY),
+            scale: String(settings.scale),
+            boxWidth: String(settings.boxWidth),
+            backgroundOpacity: String(settings.backgroundOpacity),
+            accentColor: String(settings.accentColor),
+            titleColor: String(settings.titleColor),
+            textColor: String(settings.textColor),
+            labelColor: String(settings.labelColor),
+            backgroundColor: String(settings.backgroundColor),
+            saveToken: token
+        });
+
+        if (!sent) {
+            pendingSaveToken = "";
+            status.textContent = "Kunne ikke sende lagringen til Streamer.bot.";
+            status.classList.remove("saved");
+            showToast("Kunne ikke lagre - ingen WebSocket-tilkobling.");
+            return false;
+        }
+
+        status.textContent = "Lagrer - venter på bekreftelse fra Streamer.bot...";
+        status.classList.remove("saved");
+
+        pendingSaveTimer = setTimeout(() => {
+            if (!pendingSaveToken) return;
+
+            pendingSaveToken = "";
+            status.textContent =
+                "Ingen lagringsbekreftelse. Kontroller at C# V1.11 er kompilert " +
+                "i actionen Cometen Death Counter.";
+            status.classList.remove("saved");
+            showToast("Lagringen ble ikke bekreftet.");
+        }, 6000);
+
+        return true;
+    }
+
+    function saveLayout() {
+        saveAllSettings();
+    }
+
+    function applyCounterValues(state) {
+        $("deathsValue").textContent = state.deaths ?? 0;
+        $("killsValue").textContent = state.kills ?? 0;
+        $("totalValue").textContent = state.totalKills ?? 0;
+        $("totalDeathsValue").textContent = state.totalDeaths ?? 0;
+        $("dragDeaths").textContent = state.deaths ?? 0;
+        $("dragKills").textContent = state.kills ?? 0;
+        $("dragTotal").textContent = state.totalKills ?? 0;
+        $("dragTotalDeaths").textContent = state.totalDeaths ?? 0;
+
+        if (document.activeElement !== $("setDeaths"))
+            $("setDeaths").value = state.deaths ?? 0;
+
+        if (document.activeElement !== $("setKills"))
+            $("setKills").value = state.kills ?? 0;
+
+        if (document.activeElement !== $("setTotal"))
+            $("setTotal").value = state.totalKills ?? 0;
+
+        if (document.activeElement !== $("setTotalDeaths"))
+            $("setTotalDeaths").value = state.totalDeaths ?? 0;
+    }
+
+    function applyState(state) {
+        const operation = String(state.operation || "").toLowerCase();
+        const stateToken = String(state.saveToken || "");
+
+        backendVersion = String(state.version || "");
+        if (connection.classList.contains("connected")) {
+            connectionText.textContent =
+                `Tilkoblet - C# V${backendVersion || "ukjent"}`;
+        }
+
+        applyCounterValues(state);
+
+        // While a save is pending, older sync broadcasts must not reset the form.
+        const isMatchingSaveAck =
+            pendingSaveToken &&
+            operation === "saveall" &&
+            stateToken === pendingSaveToken;
+
+        const isVerifiedSaveAck =
+            isMatchingSaveAck &&
+            state.saveVerified === true;
+
+        if (pendingSaveToken && !isMatchingSaveAck)
+            return;
+
+        $("dragTitle").textContent = state.title || "";
+
+        if (document.activeElement !== $("titleInput"))
+            $("titleInput").value = state.title || "";
+
+        $("showDeathsInput").checked = state.showDeaths !== false;
+        $("showKillsInput").checked = state.showKills !== false;
+        $("showTotalInput").checked = state.showTotal !== false;
+        $("showTotalDeathsInput").checked = state.showTotalDeaths !== false;
+        updateCounterVisibilityPreview();
+
+        if (!dragging) {
+            posX = clamp(Number(state.posX ?? 50), 3, 97);
+            posY = clamp(Number(state.posY ?? 15), 4, 96);
+            scale = clamp(Number(state.scale ?? 1), 0.35, 2.5);
+            boxWidth = clamp(Number(state.boxWidth ?? 510), 320, 1000);
+            backgroundOpacity = clamp(
+                Number(state.backgroundOpacity ?? 0.94),
+                0,
+                1
+            );
+            accentColor = state.accentColor || "#ff8a1f";
+            titleColor = state.titleColor || "#ff9b3f";
+            textColor = state.textColor || "#ffffff";
+            labelColor = state.labelColor || "#aab2c0";
+            backgroundColor = state.backgroundColor || "#0d1016";
+            updatePositionPreview();
+            updateAppearancePreview();
+        }
+
+        if (isMatchingSaveAck) {
+            clearTimeout(pendingSaveTimer);
+            pendingSaveTimer = null;
+            pendingSaveToken = "";
+
+            const status = $("saveStatus");
+
+            if (isVerifiedSaveAck) {
+                status.textContent =
+                    "Lagret, lest tilbake og bekreftet av Streamer.bot.";
+                status.classList.add("saved");
+                showToast("Alle innstillinger er lagret.");
+            } else {
+                status.textContent =
+                    "Streamer.bot kunne ikke lese innstillingene tilbake. " +
+                    "Kontroller C# V1.11 og prøv igjen.";
+                status.classList.remove("saved");
+                showToast("Lagringen kunne ikke bekreftes.");
+            }
+
+            return;
+        }
+
+        if (operation && operation !== "sync" && state.message)
+            showToast(state.message);
+    }
+
+    function updateFromPointer(event) {
+        const rect = stage.getBoundingClientRect();
+        const centerX = event.clientX - dragOffsetX;
+        const centerY = event.clientY - dragOffsetY;
+
+        posX = ((centerX - rect.left) / Math.max(1, rect.width)) * 100;
+        posY = ((centerY - rect.top) / Math.max(1, rect.height)) * 100;
+        updatePositionPreview();
+    }
+
+    dragCounter.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        const rect = stage.getBoundingClientRect();
+        const counterCenterX = rect.left + (posX / 100) * rect.width;
+        const counterCenterY = rect.top + (posY / 100) * rect.height;
+
+        dragOffsetX = event.clientX - counterCenterX;
+        dragOffsetY = event.clientY - counterCenterY;
+        dragging = true;
+        dragCounter.classList.add("dragging");
+        dragCounter.setPointerCapture(event.pointerId);
+    });
+
+    dragCounter.addEventListener("pointermove", (event) => {
+        if (dragging) updateFromPointer(event);
+    });
+
+    dragCounter.addEventListener("pointerup", (event) => {
+        if (!dragging) return;
+        updateFromPointer(event);
+        dragging = false;
+        dragCounter.classList.remove("dragging");
+
+        try { dragCounter.releasePointerCapture(event.pointerId); } catch (_) {}
+
+    });
+
+    dragCounter.addEventListener("pointercancel", () => {
+        dragging = false;
+        dragCounter.classList.remove("dragging");
+        updatePositionPreview();
+    });
+
+    $("posXInput").addEventListener("input", () => {
+        posX = Number($("posXInput").value || 50);
+        updatePositionPreview();
+    });
+
+    $("posYInput").addEventListener("input", () => {
+        posY = Number($("posYInput").value || 15);
+        updatePositionPreview();
+    });
+
+    $("scaleInput").addEventListener("input", () => {
+        scale = clamp(Number($("scaleInput").value || 1), 0.35, 2.5);
+        updatePositionPreview();
+        updateAppearancePreview();
+    });
+
+    function readAppearanceControls() {
+        accentColor = $("accentColorInput").value;
+        titleColor = $("titleColorInput").value;
+        textColor = $("textColorInput").value;
+        labelColor = $("labelColorInput").value;
+        backgroundColor = $("backgroundColorInput").value;
+        scale = clamp(Number($("appearanceScaleInput").value || 1), 0.35, 2.5);
+        boxWidth = clamp(Number($("boxWidthInput").value || 510), 320, 1000);
+        backgroundOpacity = clamp(Number($("backgroundOpacityInput").value || 0.94), 0, 1);
+        updatePositionPreview();
+        updateAppearancePreview();
+    }
+
+    [
+        "accentColorInput",
+        "titleColorInput",
+        "textColorInput",
+        "labelColorInput",
+        "backgroundColorInput",
+        "appearanceScaleInput",
+        "boxWidthInput",
+        "backgroundOpacityInput"
+    ].forEach((id) => {
+        $(id).addEventListener("input", readAppearanceControls);
+    });
+
+    $("saveAppearance").addEventListener("click", () => {
+        saveAllSettings();
+    });
+
+    $("resetAppearance").addEventListener("click", () => {
+        accentColor = "#ff8a1f";
+        titleColor = "#ff9b3f";
+        textColor = "#ffffff";
+        labelColor = "#aab2c0";
+        backgroundColor = "#0d1016";
+        backgroundOpacity = 0.94;
+        boxWidth = 510;
+        scale = 1;
+        updatePositionPreview();
+        updateAppearancePreview();
+    });
+
+    document.querySelectorAll("[data-pos]").forEach((button) => {
+        button.addEventListener("click", () => {
+            const [x, y] = button.dataset.pos.split(",").map(Number);
+            posX = x;
+            posY = y;
+            updatePositionPreview();
+        });
+    });
+
+    document.querySelectorAll("[data-op]").forEach((button) => {
+        button.addEventListener("click", () => client.doAction(button.dataset.op));
+    });
+
+    $("saveLayout").addEventListener("click", saveLayout);
+    $("statusButton").addEventListener("click", () => client.doAction("status"));
+    $("syncButton").addEventListener("click", () => client.doAction("sync"));
+
+    $("titleInput").addEventListener("input", () => {
+        $("dragTitle").textContent = $("titleInput").value;
+    });
+
+    [
+        "showDeathsInput",
+        "showKillsInput",
+        "showTotalInput",
+        "showTotalDeathsInput"
+    ].forEach((id) => {
+        $(id).addEventListener("input", updateCounterVisibilityPreview);
+    });
+
+    $("saveConfig").addEventListener("click", () => {
+        saveAllSettings();
+    });
+
+    $("applyValues").addEventListener("click", () => {
+        client.doAction("set", {
+            deaths: Math.max(0, Number.parseInt($("setDeaths").value || "0", 10)),
+            kills: Math.max(0, Number.parseInt($("setKills").value || "0", 10)),
+            totalKills: Math.max(0, Number.parseInt($("setTotal").value || "0", 10)),
+            totalDeaths: Math.max(0, Number.parseInt($("setTotalDeaths").value || "0", 10))
+        });
+    });
+
+    $("resetStream").addEventListener("click", () => {
+        if (confirm("Resette deaths og stream kills? Total kills beholdes."))
+            client.doAction("resetStream");
+    });
+
+    $("resetKills").addEventListener("click", () => {
+        if (confirm("Resette både stream Kills og Total Kills til 0?"))
+            client.doAction("resetKills");
+    });
+
+    $("resetDeaths").addEventListener("click", () => {
+        if (confirm("Resette både stream Deaths og Total Deaths til 0?"))
+            client.doAction("resetDeaths");
+    });
+
+    $("resetKillsQuick").addEventListener("click", () => {
+        if (confirm("Resette både stream Kills og Total Kills til 0?"))
+            client.doAction("resetKills");
+    });
+
+    $("resetDeathsQuick").addEventListener("click", () => {
+        if (confirm("Resette både stream Deaths og Total Deaths til 0?"))
+            client.doAction("resetDeaths");
+    });
+
+    $("resetAll").addEventListener("click", () => {
+        if (confirm("Resette alle fire tellerne til 0?"))
+            client.doAction("resetAll");
+    });
+
+    $("reconnectButton").addEventListener("click", createConnection);
+    window.addEventListener("resize", updatePositionPreview);
+
+    updatePositionPreview();
+    updateAppearancePreview();
+    updateCounterVisibilityPreview();
+    setConnected(false, "Frakoblet");
+    createConnection();
+})();
+</script>
+</body>
+</html>

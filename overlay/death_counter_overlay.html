@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cometen Death Counter Overlay V1.11</title>
+<style>
+    html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: transparent;
+        font-family: Inter, Segoe UI, Arial, sans-serif;
+    }
+
+    #counter {
+        position: absolute;
+        box-sizing: border-box;
+        left: 50%;
+        top: 15%;
+        transform: translate(-50%, -50%) scale(1);
+        transform-origin: center;
+        width: 510px;
+        min-width: 0;
+        padding: 18px 28px 20px;
+        border-left: 6px solid #ff8a1f;
+        background: linear-gradient(90deg, rgba(8, 10, 14, 0.94), rgba(13, 16, 22, 0.84));
+        color: #ffffff;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.75);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.34);
+        will-change: left, top, transform;
+    }
+
+    #title {
+        color: #ff9b3f;
+        font-size: 23px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+    }
+
+    .main {
+        display: flex;
+        align-items: baseline;
+        gap: 28px;
+        font-weight: 900;
+    }
+
+    .metric {
+        display: flex;
+        align-items: baseline;
+        gap: 9px;
+    }
+
+    .label {
+        color: #aab2c0;
+        font-size: 18px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+
+    .value {
+        font-size: 42px;
+        line-height: 1;
+    }
+
+    .totals {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 24px;
+        margin-top: 9px;
+    }
+
+    .total {
+        color: #d1d6df;
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: 0.03em;
+    }
+
+    #debug {
+        display: none;
+        position: absolute;
+        left: 12px;
+        bottom: 12px;
+        padding: 8px 11px;
+        border-radius: 7px;
+        background: rgba(0, 0, 0, 0.75);
+        color: white;
+        font-size: 13px;
+    }
+
+    body.debug #debug { display: block; }
+</style>
+</head>
+<body>
+<div id="counter">
+    <div id="title">Invasion</div>
+    <div class="main" id="streamMetrics">
+        <div class="metric" id="deathMetric">
+            <span class="label">Deaths</span>
+            <span class="value" id="deaths">0</span>
+        </div>
+        <div class="metric" id="killMetric">
+            <span class="label">Kills</span>
+            <span class="value" id="kills">0</span>
+        </div>
+    </div>
+    <div class="totals" id="totalMetrics">
+        <div class="total" id="totalMetric">Total Kills: <span id="totalKills">0</span></div>
+        <div class="total" id="totalDeathsMetric">Total Deaths: <span id="totalDeaths">0</span></div>
+    </div>
+</div>
+
+<div id="debug">Kobler til Streamer.bot...</div>
+
+<script>
+
+    const STATE_TYPE = "DEATH_COUNTER_STATE";
+
+    class DeathCounterSocket {
+        constructor(options) {
+            this.url = options.url;
+            this.actionName = options.actionName || "Cometen Death Counter";
+            this.onState = options.onState || (() => {});
+            this.onConnection = options.onConnection || (() => {});
+            this.onError = options.onError || (() => {});
+            this.socket = null;
+            this.actionId = null;
+            this.reconnectTimer = null;
+            this.requestNumber = 0;
+        }
+
+        connect() {
+            clearTimeout(this.reconnectTimer);
+
+            if (this.socket) {
+                this.socket.onopen = null;
+                this.socket.onclose = null;
+                this.socket.onerror = null;
+                this.socket.onmessage = null;
+                try { this.socket.close(); } catch (_) {}
+            }
+
+            this.onConnection(false, "Kobler til...");
+
+            try {
+                this.socket = new WebSocket(this.url);
+            } catch (error) {
+                this.onConnection(false, "Ugyldig adresse");
+                this.onError(error.message);
+                return;
+            }
+
+            this.socket.onopen = () => {
+                this.onConnection(true, "Tilkoblet");
+                this.subscribeToFallback();
+                this.findAction();
+            };
+
+            this.socket.onclose = () => {
+                this.actionId = null;
+                this.onConnection(false, "Frakoblet");
+                this.reconnectTimer = setTimeout(() => this.connect(), 2500);
+            };
+
+            this.socket.onerror = () => {
+                this.onConnection(false, "Tilkoblingsfeil");
+            };
+
+            this.socket.onmessage = (event) => this.handleMessage(event.data);
+        }
+
+        send(payload) {
+            if (!this.socket || this.socket.readyState !== WebSocket.OPEN)
+                return false;
+
+            this.socket.send(JSON.stringify(payload));
+            return true;
+        }
+
+        nextId(prefix) {
+            return `${prefix}-${Date.now()}-${++this.requestNumber}`;
+        }
+
+        subscribeToFallback() {
+            this.send({
+                request: "Subscribe",
+                id: this.nextId("dc-subscribe"),
+                events: {
+                    Raw: ["ActionCompleted"]
+                }
+            });
+        }
+
+        findAction() {
+            this.send({
+                request: "GetActions",
+                id: this.nextId("dc-get-actions")
+            });
+        }
+
+        resolveAction(actions) {
+            if (!Array.isArray(actions)) return;
+
+            const wanted = this.actionName.trim().toLowerCase();
+
+            let action = actions.find((item) =>
+                String(item.name || "").trim().toLowerCase() === wanted
+            );
+
+            if (!action) {
+                action = actions.find((item) => {
+                    const name = String(item.name || "").toLowerCase();
+                    return name.includes("death") && name.includes("counter");
+                });
+            }
+
+            if (action) {
+                this.actionId = action.id;
+                this.actionName = action.name;
+                setTimeout(() => this.doAction("sync"), 100);
+            } else {
+                this.onError(`Fant ikke actionen "${this.actionName}" i Streamer.bot.`);
+            }
+        }
+
+        doAction(operation, extraArgs = {}) {
+            const action = this.actionId
+                ? { id: this.actionId }
+                : { name: this.actionName };
+
+            // Streamer.bot handles WebSocket DoAction arguments most consistently
+            // when values are sent as strings. The C# action parses them back.
+            const actionArgs = { operation: String(operation) };
+
+            Object.entries(extraArgs || {}).forEach(([key, value]) => {
+                if (value === undefined || value === null) return;
+                actionArgs[key] = typeof value === "boolean"
+                    ? (value ? "true" : "false")
+                    : String(value);
+            });
+
+            return this.send({
+                request: "DoAction",
+                action,
+                args: actionArgs,
+                id: this.nextId("dc-action")
+            });
+        }
+
+        handleMessage(raw) {
+            let message = raw;
+
+            if (typeof message === "string") {
+                try {
+                    message = JSON.parse(message);
+                } catch (_) {
+                    return;
+                }
+            }
+
+            if (!message || typeof message !== "object") return;
+
+            if (Array.isArray(message.actions)) {
+                this.resolveAction(message.actions);
+            }
+
+            const directState = this.findState(message);
+            if (directState) {
+                this.onState(directState);
+                return;
+            }
+
+            if (
+                message.event &&
+                String(message.event.source || "").toLowerCase() === "raw" &&
+                String(message.event.type || "").toLowerCase() === "actioncompleted"
+            ) {
+                const data = message.data || {};
+                const argumentsObject = data.arguments || {};
+
+                if (argumentsObject.dcStateJson) {
+                    try {
+                        const fallbackState =
+                            typeof argumentsObject.dcStateJson === "string"
+                                ? JSON.parse(argumentsObject.dcStateJson)
+                                : argumentsObject.dcStateJson;
+
+                        if (fallbackState && fallbackState.type === STATE_TYPE)
+                            this.onState(fallbackState);
+                    } catch (_) {}
+                }
+            }
+        }
+
+        findState(value, depth = 0) {
+            if (depth > 7 || value == null) return null;
+
+            if (typeof value === "string") {
+                try {
+                    return this.findState(JSON.parse(value), depth + 1);
+                } catch (_) {
+                    return null;
+                }
+            }
+
+            if (typeof value !== "object") return null;
+            if (value.type === STATE_TYPE) return value;
+
+            for (const child of Object.values(value)) {
+                const found = this.findState(child, depth + 1);
+                if (found) return found;
+            }
+
+            return null;
+        }
+    }
+
+
+(() => {
+    "use strict";
+
+    const params = new URLSearchParams(window.location.search);
+    const host = params.get("host") || "127.0.0.1";
+    const port = params.get("port") || "8081";
+    const actionName = params.get("action") || "Cometen Death Counter";
+    const wsUrl = params.get("ws") || `ws://${host}:${port}/`;
+    const debugEnabled = params.get("debug") === "1";
+
+    const counter = document.getElementById("counter");
+    const debug = document.getElementById("debug");
+
+    if (debugEnabled)
+        document.body.classList.add("debug");
+
+    function setDebug(text) {
+        debug.textContent = text;
+    }
+
+    function hexToRgb(hex) {
+        const clean = String(hex || "#000000").replace("#", "");
+        const parsed = Number.parseInt(clean, 16);
+
+        return {
+            r: (parsed >> 16) & 255,
+            g: (parsed >> 8) & 255,
+            b: parsed & 255
+        };
+    }
+
+    function rgba(hex, opacity) {
+        const rgb = hexToRgb(hex);
+        return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
+    }
+
+    function applyState(state) {
+        document.getElementById("deaths").textContent = state.deaths ?? 0;
+        document.getElementById("kills").textContent = state.kills ?? 0;
+        document.getElementById("totalKills").textContent = state.totalKills ?? 0;
+        document.getElementById("totalDeaths").textContent = state.totalDeaths ?? 0;
+
+        const title = document.getElementById("title");
+        title.textContent = state.title || "";
+        title.style.display = state.title ? "" : "none";
+
+        const showDeaths = state.showDeaths !== false;
+        const showKills = state.showKills !== false;
+        const showTotal = state.showTotal !== false;
+        const showTotalDeaths = state.showTotalDeaths !== false;
+
+        document.getElementById("streamMetrics").style.display =
+            (showDeaths || showKills) ? "flex" : "none";
+        document.getElementById("deathMetric").style.display =
+            showDeaths ? "flex" : "none";
+        document.getElementById("killMetric").style.display =
+            showKills ? "flex" : "none";
+        document.getElementById("totalMetrics").style.display =
+            (showTotal || showTotalDeaths) ? "flex" : "none";
+        document.getElementById("totalMetric").style.display =
+            showTotal ? "block" : "none";
+        document.getElementById("totalDeathsMetric").style.display =
+            showTotalDeaths ? "block" : "none";
+
+        const x = Math.max(3, Math.min(97, Number(state.posX ?? 50)));
+        const y = Math.max(4, Math.min(96, Number(state.posY ?? 15)));
+        const scale = Math.max(0.35, Math.min(2.5, Number(state.scale ?? 1)));
+        const boxWidth = Math.max(320, Math.min(1000, Number(state.boxWidth ?? 510)));
+        const backgroundOpacity = Math.max(
+            0,
+            Math.min(1, Number(state.backgroundOpacity ?? 0.94))
+        );
+
+        const accentColor = state.accentColor || "#ff8a1f";
+        const titleColor = state.titleColor || "#ff9b3f";
+        const textColor = state.textColor || "#ffffff";
+        const labelColor = state.labelColor || "#aab2c0";
+        const backgroundColor = state.backgroundColor || "#0d1016";
+
+        counter.style.left = `${x}%`;
+        counter.style.top = `${y}%`;
+        counter.style.width = `${boxWidth}px`;
+        counter.style.minWidth = "0";
+        counter.style.maxWidth = "none";
+        counter.style.transform = `translate(-50%, -50%) scale(${scale})`;
+        counter.style.borderLeftColor = accentColor;
+        counter.style.color = textColor;
+        counter.style.background =
+            `linear-gradient(90deg, ${rgba(backgroundColor, backgroundOpacity)}, ` +
+            `${rgba(backgroundColor, backgroundOpacity * 0.88)})`;
+
+        title.style.color = titleColor;
+
+        document.querySelectorAll(".label").forEach((element) => {
+            element.style.color = labelColor;
+        });
+
+        document.querySelectorAll(".value").forEach((element) => {
+            element.style.color = textColor;
+        });
+
+        document.querySelectorAll(".total").forEach((element) => {
+            element.style.color = labelColor;
+        });
+
+        setDebug(
+            `Tilkoblet - X ${x.toFixed(1)}% - Y ${y.toFixed(1)}% - ${Math.round(scale * 100)}%`
+        );
+    }
+
+    const client = new DeathCounterSocket({
+        url: wsUrl,
+        actionName,
+        onState: applyState,
+        onConnection: (connected, text) => {
+            setDebug(text);
+        },
+        onError: (message) => {
+            setDebug(message);
+        }
+    });
+
+    client.connect();
+})();
+</script>
+</body>
+</html>
