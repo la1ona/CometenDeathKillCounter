@@ -13,15 +13,38 @@ Default Streamer.bot WebSocket endpoint:
 ws://127.0.0.1:8081/
 ```
 
-## Streamer.bot action
+## Recommended installation
 
-Create an action named exactly:
+Download and extract:
 
 ```text
-Cometen Death Counter
+release/CometenDeathKillCounter-v1.11.0.zip
 ```
 
-Add `Core -> C# -> Execute C# Code`, paste the complete contents of `src/CometenDeathCounter.cs`, then compile and save.
+In Streamer.bot, use **Import** and select:
+
+```text
+CometenDeathKillCounter_1.11.0.sb
+```
+
+The import creates `Cometen Death Counter` and the chat-command trigger for:
+
+```text
+!kill
+!death
+!rkill
+!rdeath
+!reset
+!resetkills
+!resetdeaths
+!resetall
+```
+
+If any of these commands already exist, review the imported command before using it.
+
+## Manual fallback
+
+Create an action named exactly `Cometen Death Counter`, add `Core -> C# -> Execute C# Code`, paste the complete contents of `src/CometenDeathCounter.cs`, then compile and save.
 
 ## OBS overlay
 
