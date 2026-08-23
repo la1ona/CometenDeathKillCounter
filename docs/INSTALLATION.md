@@ -13,29 +13,56 @@ The default WebSocket address is:
 ws://127.0.0.1:8081/
 ```
 
-## 1. Create the Streamer.bot action
+## 1. Download and extract the package
 
-Create an action named exactly:
+Download:
+
+```text
+release/CometenDeathKillCounter-v1.11.0.zip
+```
+
+Extract the ZIP to a permanent folder.
+
+## 2. Import into Streamer.bot
+
+In Streamer.bot, use **Import** and select:
+
+```text
+CometenDeathKillCounter_1.11.0.sb
+```
+
+The import creates the action:
 
 ```text
 Cometen Death Counter
 ```
 
-Add one sub-action:
+It also imports the chat-command trigger for:
 
 ```text
-Core -> C# -> Execute C# Code
+!kill
+!death
+!rkill
+!rdeath
+!reset
+!resetkills
+!resetdeaths
+!resetall
 ```
 
-Open `src/CometenDeathCounter.cs`, copy the entire file, paste it into the C# editor, then press **Compile** and **Save**.
+If any of these commands already exist in your Streamer.bot setup, review the imported command before enabling or using it.
 
-## 2. Configure Streamer.bot WebSocket
+### Manual fallback
+
+If you prefer a manual installation, create an action named exactly `Cometen Death Counter`, add **Core -> C# -> Execute C# Code**, paste the complete contents of `src/CometenDeathCounter.cs`, then compile and save.
+
+## 3. Configure Streamer.bot WebSocket
 
 Enable the Streamer.bot WebSocket server and use port `8081`.
 
 The WebAdmin panel can use another host or port through its connection settings when needed.
 
-## 3. Add the OBS browser overlay
+## 4. Add the OBS browser overlay
 
 Create a new OBS Browser Source and enable **Local file**.
 
@@ -54,7 +81,7 @@ Height: 1080
 
 After replacing the overlay during an update, use **Refresh cache of current page** in OBS.
 
-## 4. Open the WebAdmin panel
+## 5. Open the WebAdmin panel
 
 Open:
 
@@ -80,25 +107,6 @@ The panel controls:
 - Reset operations
 
 After saving, the panel should confirm that Streamer.bot saved and read the settings back.
-
-## 5. Add chat-command triggers
-
-Add separate **Command Triggered** triggers directly to the `Cometen Death Counter` action.
-
-Recommended commands:
-
-```text
-!kill
-!death
-!rkill
-!rdeath
-!reset
-!resetkills
-!resetdeaths
-!resetall
-```
-
-The C# action reads `command`, `commandName`, and `rawInput`, and maps the commands to the appropriate operation.
 
 ## 6. Stream Deck setup
 
