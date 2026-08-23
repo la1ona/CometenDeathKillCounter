@@ -121,6 +121,7 @@ Compile and save the C# action again, reopen the new WebAdmin panel, and refresh
 - [Installation](docs/INSTALLATION.md)
 - [Changelog](CHANGELOG.md)
 - [Security](SECURITY.md)
+- [License](LICENSE)
 
 The Markdown files in `wiki/` are the maintained source for the GitHub Wiki and are published by the `Sync Wiki` workflow.
 
@@ -130,4 +131,4 @@ The project does not require cloud credentials or API keys. Keep local productio
 
 ## License
 
-Released under the [GNU General Public License v3.0](LICENSE).
+Released under the [MIT License](LICENSE).
