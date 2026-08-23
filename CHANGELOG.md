@@ -4,9 +4,17 @@ All notable changes to CometenDeathKillCounter are documented here.
 
 ## Unreleased
 
+### Added
+
+- Ready-to-import `CometenDeathKillCounter_1.11.0.sb` Streamer.bot package
+- Complete v1.11.0 ZIP containing the Streamer.bot import, source, WebAdmin panel, OBS overlay, documentation, security policy and MIT license
+- Imported chat-command trigger for `!kill`, `!death`, `!rkill`, `!rdeath`, `!reset`, `!resetkills`, `!resetdeaths` and `!resetall`
+
 ### Changed
 
-- Project license changed from GNU General Public License v3.0 to MIT.
+- Streamer.bot import is now the recommended installation method
+- Manual C# installation remains available as a fallback
+- Project license changed from GNU General Public License v3.0 to MIT
 
 ## [1.11.0] - 2026-07-21
 
