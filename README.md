@@ -22,6 +22,16 @@ The project includes a movable browser overlay, a local WebAdmin panel, persiste
 
 **v1.11.0**
 
+## Download
+
+The ready-to-use package is available in:
+
+```text
+release/CometenDeathKillCounter-v1.11.0.zip
+```
+
+The repository also includes the complete source, WebAdmin panel and OBS overlay as separate files.
+
 ## Repository structure
 
 ```text
@@ -103,6 +113,20 @@ Replace all three runtime files when updating:
 - `overlay/death_counter_overlay.html`
 
 Compile and save the C# action again, reopen the new WebAdmin panel, and refresh the OBS Browser Source cache.
+
+## Documentation
+
+- [GitHub Wiki](https://github.com/la1ona/CometenDeathKillCounter/wiki)
+- [Documentation index](docs/README.md)
+- [Installation](docs/INSTALLATION.md)
+- [Changelog](CHANGELOG.md)
+- [Security](SECURITY.md)
+
+The Markdown files in `wiki/` are the maintained source for the GitHub Wiki and are published by the `Sync Wiki` workflow.
+
+## Security
+
+The project does not require cloud credentials or API keys. Keep local production secrets and private environment details out of the repository. See [SECURITY.md](SECURITY.md).
 
 ## License
 
