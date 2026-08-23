@@ -2,7 +2,7 @@
 
 A customizable death and kill counter for **Streamer.bot** and **OBS Studio**.
 
-The project includes a movable browser overlay, a local WebAdmin panel, persistent stream and lifetime totals, chat-command support, and Stream Deck-friendly operations.
+The project includes a movable browser overlay, a local WebAdmin panel, persistent stream and lifetime totals, chat-command support, Stream Deck-friendly operations, and a ready-to-import Streamer.bot package.
 
 ## Features
 
@@ -17,6 +17,7 @@ The project includes a movable browser overlay, a local WebAdmin panel, persiste
 - Chat commands and Stream Deck operations
 - Separate reset controls for stream counters, kills, deaths, or everything
 - Local HTML files with no external JavaScript dependencies
+- Ready-to-import Streamer.bot `.sb` file
 
 ## Current version
 
@@ -24,34 +25,42 @@ The project includes a movable browser overlay, a local WebAdmin panel, persiste
 
 ## Download
 
-The ready-to-use package is available in:
+The complete ready-to-use package is:
 
 ```text
 release/CometenDeathKillCounter-v1.11.0.zip
 ```
 
-The repository also includes the complete source, WebAdmin panel and OBS overlay as separate files.
-
-## Repository structure
+The standalone Streamer.bot import is also available as:
 
 ```text
-src/CometenDeathCounter.cs              Streamer.bot C# action
-web/death_counter_panel.html            Local WebAdmin panel
-overlay/death_counter_overlay.html      OBS browser overlay
-docs/INSTALLATION.md                    Installation and setup guide
-release/CometenDeathKillCounter-v1.11.0.zip
+release/CometenDeathKillCounter_1.11.0.sb
 ```
 
 ## Quick setup
 
-1. Create a Streamer.bot action named exactly `Cometen Death Counter`.
-2. Add an **Execute C# Code** sub-action.
-3. Paste the complete contents of `src/CometenDeathCounter.cs`.
-4. Compile and save the C# action.
-5. Enable the Streamer.bot WebSocket server on port `8081`.
-6. Open `web/death_counter_panel.html` in a browser.
-7. Add `overlay/death_counter_overlay.html` as a local OBS Browser Source.
-8. Set the OBS Browser Source size to `1920 x 1080`.
+1. Download and extract `CometenDeathKillCounter-v1.11.0.zip`.
+2. In Streamer.bot, use **Import** and select `CometenDeathKillCounter_1.11.0.sb`.
+3. The import creates the action `Cometen Death Counter` and its chat-command trigger.
+4. Enable the Streamer.bot WebSocket server on port `8081`.
+5. Open `web/death_counter_panel.html` in a browser.
+6. Add `overlay/death_counter_overlay.html` as a local OBS Browser Source.
+7. Set the OBS Browser Source size to `1920 x 1080`.
+
+Imported chat commands:
+
+```text
+!kill
+!death
+!rkill
+!rdeath
+!reset
+!resetkills
+!resetdeaths
+!resetall
+```
+
+The C# source remains included in `src/CometenDeathCounter.cs` as a manual-install fallback.
 
 The panel should show:
 
@@ -61,20 +70,16 @@ Tilkoblet - C# V1.11.0
 
 See [docs/INSTALLATION.md](docs/INSTALLATION.md) for the complete setup.
 
-## Chat commands
+## Repository structure
 
-| Command | Action |
-|---|---|
-| `!kill` | Add one Stream Kill and one Total Kill |
-| `!death` | Add one Stream Death and one Total Death |
-| `!rkill` | Remove one Stream Kill and one Total Kill |
-| `!rdeath` | Remove one Stream Death and one Total Death |
-| `!reset` | Reset Stream Deaths and Stream Kills only |
-| `!resetkills` | Reset Stream Kills and Total Kills |
-| `!resetdeaths` | Reset Stream Deaths and Total Deaths |
-| `!resetall` | Reset all four counters |
-
-Command triggers must be attached directly to the `Cometen Death Counter` action.
+```text
+release/CometenDeathKillCounter_1.11.0.sb  Streamer.bot import
+src/CometenDeathCounter.cs                 Streamer.bot C# source fallback
+web/death_counter_panel.html               Local WebAdmin panel
+overlay/death_counter_overlay.html         OBS browser overlay
+docs/INSTALLATION.md                       Installation and setup guide
+release/CometenDeathKillCounter-v1.11.0.zip Complete package
+```
 
 ## Stream Deck operations
 
@@ -106,13 +111,7 @@ The project also stores overlay appearance, position, title, and visibility sett
 
 ## Updating
 
-Replace all three runtime files when updating:
-
-- `src/CometenDeathCounter.cs`
-- `web/death_counter_panel.html`
-- `overlay/death_counter_overlay.html`
-
-Compile and save the C# action again, reopen the new WebAdmin panel, and refresh the OBS Browser Source cache.
+Replace/import the files from the latest package, reopen the WebAdmin panel, and refresh the OBS Browser Source cache after replacing the overlay.
 
 ## Documentation
 
