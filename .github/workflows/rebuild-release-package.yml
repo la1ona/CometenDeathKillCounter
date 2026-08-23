@@ -1,0 +1,68 @@
+name: Rebuild release package
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'web/**'
+      - 'overlay/**'
+      - 'docs/INSTALLATION.md'
+      - 'LICENSE'
+      - '.github/workflows/rebuild-release-package.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: death-kill-counter-release-package
+  cancel-in-progress: true
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Build v1.11.0 package
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import zipfile
+
+          version = '1.11.0'
+          root = f'CometenDeathKillCounter-v{version}'
+          out = Path('release') / f'CometenDeathKillCounter-v{version}.zip'
+          out.parent.mkdir(parents=True, exist_ok=True)
+
+          files = [
+              ('src/CometenDeathCounter.cs', 'CometenDeathCounter.cs'),
+              ('web/death_counter_panel.html', 'death_counter_panel.html'),
+              ('overlay/death_counter_overlay.html', 'death_counter_overlay.html'),
+              ('docs/INSTALLATION.md', 'INSTALLATION.md'),
+              ('LICENSE', 'LICENSE'),
+          ]
+
+          with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as archive:
+              for source, name in files:
+                  archive.write(source, f'{root}/{name}')
+
+          print(f'Built {out} ({out.stat().st_size} bytes)')
+          PY
+
+      - name: Commit refreshed package
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add release/CometenDeathKillCounter-v1.11.0.zip
+          if git diff --cached --quiet; then
+            echo "Release package is already up to date."
+            exit 0
+          fi
+          git commit -m "Rebuild v1.11.0 package with current license"
+          git push
