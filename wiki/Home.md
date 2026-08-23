@@ -4,6 +4,8 @@ CometenDeathKillCounter is a customizable death and kill counter for Streamer.bo
 
 Current release: **v1.11.0**
 
+License: **MIT**
+
 ## Features
 
 - Stream Deaths and Stream Kills
@@ -31,6 +33,7 @@ Current release: **v1.11.0**
 - [Configuration and State](Configuration-and-State)
 - [Troubleshooting](Troubleshooting)
 - [Security](Security)
+- [License](License)
 - [Release Notes](Release-Notes)
 
 ## Repository
