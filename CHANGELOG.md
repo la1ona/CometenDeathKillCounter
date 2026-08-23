@@ -2,6 +2,12 @@
 
 All notable changes to CometenDeathKillCounter are documented here.
 
+## Unreleased
+
+### Changed
+
+- Project license changed from GNU General Public License v3.0 to MIT.
+
 ## [1.11.0] - 2026-07-21
 
 ### Added
