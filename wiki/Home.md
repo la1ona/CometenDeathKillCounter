@@ -17,14 +17,17 @@ License: **MIT**
 - Chat-command support
 - Stream Deck-friendly operations
 - Local WebAdmin panel
+- Ready-to-import Streamer.bot `.sb` file
 
 ## Quick start
 
-1. Follow the [Installation](Installation) guide.
-2. Create the Streamer.bot action `Cometen Death Counter`.
-3. Add the OBS browser overlay.
-4. Open the WebAdmin panel.
-5. Add optional chat commands or Stream Deck controls.
+1. Download and extract `CometenDeathKillCounter-v1.11.0.zip`.
+2. Import `CometenDeathKillCounter_1.11.0.sb` into Streamer.bot.
+3. Enable the Streamer.bot WebSocket server on port `8081`.
+4. Add the OBS browser overlay.
+5. Open the WebAdmin panel.
+
+The import creates the `Cometen Death Counter` action and its chat-command trigger.
 
 ## Documentation
 
