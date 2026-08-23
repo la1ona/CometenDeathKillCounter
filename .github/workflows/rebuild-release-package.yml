@@ -7,7 +7,10 @@ on:
       - 'src/**'
       - 'web/**'
       - 'overlay/**'
-      - 'docs/INSTALLATION.md'
+      - 'docs/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'SECURITY.md'
       - 'LICENSE'
       - '.github/workflows/rebuild-release-package.yml'
 
@@ -25,44 +28,186 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Build v1.11.0 package
+      - name: Build Streamer.bot import and v1.11.0 package
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
+          import base64
+          import gzip
+          import json
+          import uuid
           import zipfile
 
           version = '1.11.0'
-          root = f'CometenDeathKillCounter-v{version}'
-          out = Path('release') / f'CometenDeathKillCounter-v{version}.zip'
-          out.parent.mkdir(parents=True, exist_ok=True)
+          group = 'Cometen Death Kill Counter'
+          action_name = 'Cometen Death Counter'
+          package_root = f'CometenDeathKillCounter-v{version}'
+          release_dir = Path('release')
+          release_dir.mkdir(parents=True, exist_ok=True)
+
+          def stable_id(name: str) -> str:
+              return str(uuid.uuid5(uuid.NAMESPACE_URL, f'https://github.com/la1ona/CometenDeathKillCounter/{name}'))
+
+          source_path = Path('src/CometenDeathCounter.cs')
+          source_bytes = source_path.read_bytes()
+
+          command_id = stable_id('streamerbot-command')
+          trigger_id = stable_id('streamerbot-command-trigger')
+          action_id = stable_id('streamerbot-main-action')
+          csharp_id = stable_id('streamerbot-csharp-subaction')
+
+          commands = [
+              '!kill',
+              '!death',
+              '!rkill',
+              '!rdeath',
+              '!reset',
+              '!resetkills',
+              '!resetdeaths',
+              '!resetall',
+          ]
+
+          export = {
+              'meta': {
+                  'name': f'CometenDeathKillCounter v{version}',
+                  'author': 'Cometen',
+                  'version': version,
+                  'description': 'Ready-to-import Streamer.bot action and chat commands for CometenDeathKillCounter.'
+              },
+              'data': {
+                  'actions': [
+                      {
+                          'id': action_id,
+                          'queue': '00000000-0000-0000-0000-000000000000',
+                          'enabled': True,
+                          'excludeFromHistory': False,
+                          'excludeFromPending': False,
+                          'name': action_name,
+                          'group': group,
+                          'alwaysRun': False,
+                          'randomAction': False,
+                          'concurrent': False,
+                          'triggers': [
+                              {
+                                  'commandId': command_id,
+                                  'id': trigger_id,
+                                  'type': 401,
+                                  'enabled': True,
+                                  'exclusions': []
+                              }
+                          ],
+                          'subActions': [
+                              {
+                                  'name': None,
+                                  'description': None,
+                                  'references': [],
+                                  'byteCode': base64.b64encode(source_bytes).decode('ascii'),
+                                  'precompile': False,
+                                  'delayStart': False,
+                                  'saveResultToVariable': False,
+                                  'saveToVariable': None,
+                                  'id': csharp_id,
+                                  'weight': 0.0,
+                                  'type': 99999,
+                                  'parentId': None,
+                                  'enabled': True,
+                                  'index': 0
+                              }
+                          ],
+                          'collapsedGroups': []
+                      }
+                  ],
+                  'queues': [],
+                  'commands': [
+                      {
+                          'id': command_id,
+                          'name': '!kill',
+                          'enabled': True,
+                          'include': False,
+                          'mode': 0,
+                          'command': '\r\n'.join(commands),
+                          'regexExplicitCapture': False,
+                          'location': 0,
+                          'ignoreBotAccount': True,
+                          'ignoreInternal': True,
+                          'sources': 1,
+                          'persistCounter': False,
+                          'persistUserCounter': False,
+                          'caseSensitive': False,
+                          'globalCooldown': 0,
+                          'userCooldown': 0,
+                          'group': group,
+                          'grantType': 0,
+                          'permittedUsers': [],
+                          'permittedGroups': [],
+                          '_uiIwwMNAAL8h4D3YWTFGiJcGDYdb': ', '.join(commands)
+                      }
+                  ],
+                  'websocketServers': [],
+                  'websocketClients': [],
+                  'timers': []
+              },
+              'version': 24,
+              'exportedFrom': '1.0.7',
+              'minimumVersion': '1.0.0-alpha.1'
+          }
+
+          json_bytes = json.dumps(export, ensure_ascii=False, separators=(',', ':')).encode('utf-8')
+          encoded = base64.b64encode(b'SBAE' + gzip.compress(json_bytes, mtime=0)).decode('ascii')
+
+          import_name = f'CometenDeathKillCounter_{version}.sb'
+          import_path = release_dir / import_name
+          import_path.write_text(encoded, encoding='utf-8', newline='')
+
+          # Verify the generated import before packaging it.
+          decoded = base64.b64decode(import_path.read_text(encoding='utf-8'))
+          assert decoded[:4] == b'SBAE'
+          verified = json.loads(gzip.decompress(decoded[4:]))
+          assert verified['data']['actions'][0]['name'] == action_name
+          assert verified['data']['actions'][0]['subActions'][0]['type'] == 99999
+          assert len(verified['data']['commands']) == 1
+          assert all(command in verified['data']['commands'][0]['command'] for command in commands)
+
+          out = release_dir / f'CometenDeathKillCounter-v{version}.zip'
 
           files = [
-              ('src/CometenDeathCounter.cs', 'CometenDeathCounter.cs'),
-              ('web/death_counter_panel.html', 'death_counter_panel.html'),
-              ('overlay/death_counter_overlay.html', 'death_counter_overlay.html'),
-              ('docs/INSTALLATION.md', 'INSTALLATION.md'),
-              ('LICENSE', 'LICENSE'),
+              (import_path, import_name),
+              (Path('README.md'), 'README.md'),
+              (Path('CHANGELOG.md'), 'CHANGELOG.md'),
+              (Path('SECURITY.md'), 'SECURITY.md'),
+              (Path('LICENSE'), 'LICENSE'),
+              (Path('src/CometenDeathCounter.cs'), 'src/CometenDeathCounter.cs'),
+              (Path('web/death_counter_panel.html'), 'web/death_counter_panel.html'),
+              (Path('overlay/death_counter_overlay.html'), 'overlay/death_counter_overlay.html'),
           ]
+
+          for doc in sorted(Path('docs').glob('*.md')):
+              files.append((doc, f'docs/{doc.name}'))
 
           with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as archive:
               for source, name in files:
-                  archive.write(source, f'{root}/{name}')
+                  archive.write(source, f'{package_root}/{name}')
 
-          print(f'Built {out} ({out.stat().st_size} bytes)')
+          print(f'Built import: {import_path} ({import_path.stat().st_size} bytes)')
+          print(f'Built package: {out} ({out.stat().st_size} bytes)')
+          print('Package files:')
+          with zipfile.ZipFile(out, 'r') as archive:
+              for name in archive.namelist():
+                  print(f' - {name}')
           PY
 
-      - name: Commit refreshed package
+      - name: Commit refreshed import and package
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add release/CometenDeathKillCounter-v1.11.0.zip
+          git add release/CometenDeathKillCounter_1.11.0.sb release/CometenDeathKillCounter-v1.11.0.zip
           if git diff --cached --quiet; then
-            echo "Release package is already up to date."
+            echo "Release import and package are already up to date."
             exit 0
           fi
-          git commit -m "Rebuild v1.11.0 package with current license"
+          git commit -m "Build v1.11.0 Streamer.bot import and full package"
           git push
