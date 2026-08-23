@@ -6,6 +6,7 @@
 - [Configuration and State](Configuration-and-State)
 - [Troubleshooting](Troubleshooting)
 - [Security](Security)
+- [License](License)
 - [Release Notes](Release-Notes)
 
 ---
